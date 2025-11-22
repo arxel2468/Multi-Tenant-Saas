@@ -1,30 +1,51 @@
-import { UserButton, SignedIn, SignedOut, RedirectToSignIn } from "@clerk/nextjs";
-import { Button } from "@/components/ui/button";
+import { UserButton } from "@clerk/nextjs";
+import { getWorkspaces } from "@/actions/workspace";
+import { CreateWorkspaceDialog } from "@/components/create-workspace-dialog";
+import { Card } from "@/components/ui/card";
+import Link from "next/link";
+import { ArrowRight, Briefcase } from "lucide-react";
 
-export default function Dashboard() {
+export default async function Dashboard() {
+  const workspaces = await getWorkspaces();
+
   return (
-    <>
-      <SignedIn>
-        <div className="min-h-screen bg-gray-50 p-8">
-          <div className="max-w-4xl mx-auto">
-            <div className="flex justify-between items-center mb-12">
-              <h1 className="text-4xl font-bold">Welcome back!</h1>
-              <UserButton />
-            </div>
-            <div className="bg-white rounded-2xl p-12 text-center shadow-xl">
-              <h2 className="text-3xl font-bold mb-4">Day 2 Complete</h2>
-              <p className="text-xl text-gray-600 mb-8">
-                Auth + beautiful marketing site is LIVE.<br />
-                Tomorrow we add Workspaces (the multi-tenant magic).
-              </p>
-              <Button size="lg">Create your first workspace →</Button>
-            </div>
-          </div>
+    <div className="min-h-screen bg-gray-50">
+      {/* Navbar */}
+      <nav className="bg-white border-b border-gray-200 px-8 py-4 flex justify-between items-center">
+        <h1 className="font-bold text-xl tracking-tight flex items-center gap-2">
+          <Briefcase className="text-purple-600" /> YourSaaS
+        </h1>
+        <UserButton />
+      </nav>
+
+      <main className="max-w-5xl mx-auto py-12 px-6">
+        <div className="flex justify-between items-center mb-8">
+          <h2 className="text-2xl font-bold text-gray-900">Your Workspaces</h2>
+          <CreateWorkspaceDialog />
         </div>
-      </SignedIn>
-      <SignedOut>
-        <RedirectToSignIn />
-      </SignedOut>
-    </>
+
+        {workspaces.length === 0 ? (
+          <div className="text-center py-20 bg-white rounded-xl border border-dashed border-gray-300">
+            <h3 className="text-xl font-semibold text-gray-900 mb-2">No workspaces yet</h3>
+            <p className="text-gray-500 mb-6">Create your first workspace to get started.</p>
+            <CreateWorkspaceDialog />
+          </div>
+        ) : (
+          <div className="grid md:grid-cols-3 gap-6">
+            {workspaces.map((ws) => (
+              <Link key={ws.id} href={`/dashboard/${ws.id}`}>
+                <Card className="p-6 hover:shadow-md transition-all cursor-pointer border-l-4 border-l-transparent hover:border-l-purple-600">
+                  <h3 className="font-bold text-lg mb-2">{ws.name}</h3>
+                  <p className="text-sm text-gray-500">Role: OWNER</p>
+                  <div className="mt-4 flex items-center text-purple-600 text-sm font-medium">
+                    Open Dashboard <ArrowRight className="ml-1 w-4 h-4" />
+                  </div>
+                </Card>
+              </Link>
+            ))}
+          </div>
+        )}
+      </main>
+    </div>
   );
 }
