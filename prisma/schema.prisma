@@ -14,6 +14,11 @@ model Workspace {
   createdAt DateTime     @default(now())
   updatedAt DateTime     @updatedAt
   members   Membership[] // A workspace has many members
+
+  // New: Stripe Subscription Details
+  subscriptionId String?   // The ID from Stripe
+  customerId     String?   // The Customer ID from Stripe
+  plan           String    @default("FREE") // "FREE" or "PRO"
 }
 
 model Membership {
