@@ -4,21 +4,22 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
+  url = env("DATABASE_URL")
 }
 
 model Workspace {
-  id        String       @id @default(cuid())
-  name      String
-  slug      String       @unique // unique url like /app/my-team
-  createdAt DateTime     @default(now())
-  updatedAt DateTime     @updatedAt
-  members   Membership[] // A workspace has many members
+  id             String       @id @default(cuid())
+  name           String
+  slug           String       @unique 
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  members        Membership[] 
+  invitations    Invitation[] 
 
-  // New: Stripe Subscription Details
-  subscriptionId String?   // The ID from Stripe
-  customerId     String?   // The Customer ID from Stripe
-  plan           String    @default("FREE") // "FREE" or "PRO"
+  // Subscription Details
+  subscriptionId String?   
+  customerId     String?   
+  plan           String    @default("FREE") 
 }
 
 model Membership {
@@ -30,4 +31,17 @@ model Membership {
   workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
 
   @@unique([userId, workspaceId]) // A user can't be in the same workspace twice
+}
+
+model Invitation {
+  id          String    @id @default(cuid())
+  email       String    // Who are we inviting?
+  token       String    @unique // The secret code
+  workspaceId String
+  status      String    @default("PENDING") // PENDING, ACCEPTED
+  createdAt   DateTime  @default(now())
+
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  
+  @@unique([workspaceId, email]) // Can't invite same person twice to same team
 }

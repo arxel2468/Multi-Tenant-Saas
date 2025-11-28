@@ -1,14 +1,14 @@
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { PartyPopper } from "lucide-react"; // Add this icon
+import { PartyPopper } from "lucide-react"; 
 
 export default async function WorkspaceDashboard({ 
   params,
   searchParams 
 }: { 
   params: Promise<{ workspaceId: string }>;
-  searchParams: Promise<{ success?: string }>; // Add searchParams
+  searchParams: Promise<{ success?: string }>;
 }) {
   const { workspaceId } = await params;
   const { success } = await searchParams;
@@ -44,6 +44,9 @@ export default async function WorkspaceDashboard({
           </h1>
           <p className="text-gray-500 mt-1">Workspace ID: {workspace.id}</p>
         </div>
+        <a href={`/dashboard/${workspaceId}/settings`}>
+          <Button variant="secondary">Settings</Button>
+        </a>
         <a href={`/dashboard/${workspaceId}/billing`}>
           <Button variant="outline">Manage Billing</Button>
         </a>
