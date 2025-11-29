@@ -23,10 +23,13 @@ Features workspace isolation, team collaboration, and subscription billing.
 
 ## 📸 Screenshots
 - Landing Page
-*(screenshots/LandingPage.png)*
+
+![Landing Page goes here](screenshots/LandingPage.png)
 
 - Dashboard
-*(screenshots/Dashboard.png)*
+
+![Dashboard goes here](screenshots/Dashboard.png)
 
 - Workspace
-*(screenshots/Workspace.png)*
+
+![Workspace goes here](screenshots/Workspace.png)
