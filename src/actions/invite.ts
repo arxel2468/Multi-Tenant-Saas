@@ -50,7 +50,7 @@ export async function acceptInvite(token: string) {
   await prisma.membership.create({
     data: {
       userId: user.id,
-      userEmail: user.emailAddress[0].emailAddress,
+      userEmail: user.emailAddresses[0].emailAddress,
       workspaceId: invitation.workspaceId,
       role: "MEMBER",
     },
