@@ -1,36 +1,32 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Multi-Tenant SaaS Platform 🚀
 
-## Getting Started
+A production-ready SaaS boilerplate built with the bleeding-edge **Next.js 15 App Router**. 
+Features workspace isolation, team collaboration, and subscription billing.
 
-First, run the development server:
+**Live Demo:** [https://multi-tenant-saas-phi-indol.vercel.app](https://multi-tenant-saas-phi-indol.vercel.app)
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## ✨ Key Features
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+- **🔐 Multi-Tenancy:** Complete data isolation between workspaces.
+- **💳 Subscriptions:** Integrated Razorpay for PRO plan upgrades.
+- **👥 Team Growth:** Email invitation system with secure magic links.
+- **⚡ Next.js 15:** Server Actions, Async Components, and Partial Prerendering.
+- **🎨 UI/UX:** Built with Tailwind CSS, shadcn/ui, and optimistic UI updates.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 🛠️ Tech Stack
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- **Framework:** Next.js 15 (App Router)
+- **Database:** PostgreSQL (via Neon) + Prisma ORM
+- **Auth:** Clerk (Middleware protected routes)
+- **Payments:** Razorpay
+- **Styling:** Tailwind CSS + Lucide Icons
 
-## Learn More
+## 📸 Screenshots
+- Landing Page
+*(screenshots/LandingPage.png)*
 
-To learn more about Next.js, take a look at the following resources:
+- Dashboard
+*(screenshots/Dashboard.png)*
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Workspace
+*(screenshots/Workspace.png)*
