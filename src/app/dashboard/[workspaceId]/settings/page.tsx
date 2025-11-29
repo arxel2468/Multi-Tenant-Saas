@@ -85,7 +85,7 @@ export default async function SettingsPage({
                   </Avatar>
                   <div>
                     <p className="font-medium">
-                        {member.userEmail || memeber.userId}
+                        {member.userEmail || member.userId}
                         {member.userId === userId ? "You" : ""}
                     </p>
                     <p className="text-xs text-gray-500">{member.role}</p>
