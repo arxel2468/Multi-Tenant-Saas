@@ -15,6 +15,7 @@ model Workspace {
   updatedAt      DateTime     @updatedAt
   members        Membership[] 
   invitations    Invitation[] 
+  tasks          Task[]
 
   // Subscription Details
   subscriptionId String?   
@@ -25,8 +26,10 @@ model Workspace {
 model Membership {
   id          String    @id @default(cuid())
   userId      String    // Clerk User ID
+  userEmail   String?   // Cache email 
   workspaceId String
   role        String    @default("MEMBER") // "OWNER" or "MEMBER"
+  tasks       Task[]
 
   workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
 
@@ -44,4 +47,20 @@ model Invitation {
   workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   
   @@unique([workspaceId, email]) // Can't invite same person twice to same team
+}
+
+model Task {
+  id           String      @id @default(cuid())
+  workspaceId  String
+  title        String
+  description  String?
+  status       String      @default("TODO") // "TODO" or "DONE"
+  
+  assignedToId String?     
+  
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  workspace    Workspace   @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  assignee     Membership? @relation(fields: [assignedToId], references: [id])
 }

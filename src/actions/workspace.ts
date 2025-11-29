@@ -1,28 +1,22 @@
 "use server";
 
-import { auth } from "@clerk/nextjs/server";
+import { auth, currentUser } from "@clerk/nextjs/server";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 
 export async function createWorkspace(formData: FormData) {
-  const { userId } = await auth();
-
-  // Debugging: Check if ID exists in your terminal
-  console.log("Attempting to create workspace. User ID:", userId);
-
-  if (!userId) {
-    // This ensures we know exactly why it failed
-    throw new Error("You must be signed in to create a workspace.");
-  }
+  const user = await currentUser(); // <--- GET FULL USER DATA
+  if (!user) throw new Error("Unauthorized");
 
   const name = formData.get("name") as string;
+  const slug = name.toLowerCase().replace(/\s+/g, "-") + "-" + Date.now().toString().slice(-4);
+  const userEmail = user.emailAddresses[0].emailAddress;
 
   if (!name) {
       throw new Error("Workspace name is required");
   }
 
-  const slug = name.toLowerCase().replace(/\s+/g, "-") + "-" + Date.now().toString().slice(-4);
 
   let workspace;
 
@@ -33,7 +27,8 @@ export async function createWorkspace(formData: FormData) {
           slug,
           members: {
             create: {
-              userId,
+              userId: user.id,
+              userEmail: userEmail,
               role: "OWNER",
             },
           },

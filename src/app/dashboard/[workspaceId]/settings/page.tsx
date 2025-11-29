@@ -84,7 +84,10 @@ export default async function SettingsPage({
                     <AvatarFallback>{member.role[0]}</AvatarFallback>
                   </Avatar>
                   <div>
-                    <p className="font-medium">{member.userId === userId ? "You" : member.userId}</p>
+                    <p className="font-medium">
+                        {member.userEmail || memeber.userId}
+                        {member.userId === userId ? "You" : ""}
+                    </p>
                     <p className="text-xs text-gray-500">{member.role}</p>
                   </div>
                 </div>

@@ -1,6 +1,6 @@
 "use server";
 
-import { auth } from "@clerk/nextjs/server";
+import { auth, currentUser } from "@clerk/nextjs/server";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
@@ -33,9 +33,9 @@ export async function createInvite(formData: FormData) {
 // 2. Accept an Invite
 export async function acceptInvite(token: string) {
   // FIX: Add 'await' here too
-  const { userId } = await auth();
+  const user = await currentUser();
   
-  if (!userId) {
+  if (!user) {
     return redirect(`/sign-in?redirect_url=/invite/${token}`);
   }
 
@@ -49,7 +49,8 @@ export async function acceptInvite(token: string) {
 
   await prisma.membership.create({
     data: {
-      userId,
+      userId: user.id,
+      userEmail: user.emailAddress[0].emailAddress,
       workspaceId: invitation.workspaceId,
       role: "MEMBER",
     },
