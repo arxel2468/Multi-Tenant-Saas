@@ -4,39 +4,14 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowRight, CheckCircle2, Layout, Users, ShieldCheck, Zap } from "lucide-react";
 import { SignedIn, SignedOut, SignInButton } from "@clerk/nextjs";
 import Link from "next/link";
+import { LandingNav } from "@/components/landing-nav";
 
 export default function LandingPage() {
   return (
     <div className="min-h-screen bg-white text-slate-900 font-sans selection:bg-purple-100">
       
       {/* 1. NAVBAR */}
-      <nav className="border-b sticky top-0 bg-white/80 backdrop-blur-md z-50">
-        <div className="container mx-auto px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2 font-bold text-xl tracking-tight">
-            <div className="w-8 h-8 bg-purple-600 rounded-lg flex items-center justify-center text-white">
-              <Zap size={20} fill="currentColor" />
-            </div>
-            YourSaaS
-          </div>
-          
-          <div className="flex items-center gap-4">
-            <SignedOut>
-              <SignInButton mode="modal">
-                <Button variant="ghost">Log in</Button>
-              </SignInButton>
-              <SignInButton mode="modal">
-                <Button className="bg-purple-600 hover:bg-purple-700">Get Started</Button>
-              </SignInButton>
-            </SignedOut>
-            <SignedIn>
-              <Link href="/dashboard">
-                <Button variant="secondary">Go to Dashboard</Button>
-              </Link>
-            </SignedIn>
-          </div>
-        </div>
-      </nav>
-
+      <LandingNav />
       {/* 2. HERO SECTION */}
       <section className="relative pt-32 pb-20 overflow-hidden">
         <div className="container mx-auto px-6 text-center relative z-10">
@@ -193,17 +168,80 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* 6. FOOTER */}
-      <footer className="py-12 bg-white border-t text-center">
-        <div className="container mx-auto px-6 text-slate-500">
-          <p className="mb-4">&copy; 2025 YourSaaS Inc. Built with Next.js 15 & Tailwind.</p>
-          <div className="flex justify-center gap-6 text-sm">
-            <a href="#" className="hover:text-purple-600">Privacy Policy</a>
-            <a href="#" className="hover:text-purple-600">Terms of Service</a>
-            <a href="https://github.com/arxel2468" className="hover:text-purple-600">GitHub</a>
+      {/* 6. MEGA FOOTER */}
+<footer className="bg-slate-950 text-slate-300 py-20 border-t border-slate-800">
+  <div className="container mx-auto px-6">
+    <div className="grid md:grid-cols-4 gap-12 mb-16">
+      
+      {/* Brand Column */}
+      <div className="col-span-1">
+        <div className="flex items-center gap-2 font-bold text-xl text-white mb-4">
+          <div className="w-8 h-8 bg-purple-600 rounded-lg flex items-center justify-center text-white">
+            <Zap size={20} fill="currentColor" />
           </div>
+          YourSaaS
         </div>
-      </footer>
+        <p className="text-slate-500 leading-relaxed mb-6">
+          The operating system for high-performing teams. Ship software faster, together.
+        </p>
+        <div className="flex gap-4">
+          {/* Social Icons (Mock) */}
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="w-10 h-10 bg-slate-900 rounded-full flex items-center justify-center hover:bg-purple-600 transition-colors cursor-pointer">
+              <div className="w-4 h-4 bg-current rounded-sm" />
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Links Columns */}
+      <div>
+        <h4 className="text-white font-bold mb-6">Product</h4>
+        <ul className="space-y-4 text-sm">
+          {["Features", "Pricing", "Integrations", "Changelog", "Docs"].map(item => (
+            <li key={item}><a href="#" className="hover:text-purple-400 transition-colors">{item}</a></li>
+          ))}
+        </ul>
+      </div>
+
+      <div>
+        <h4 className="text-white font-bold mb-6">Company</h4>
+        <ul className="space-y-4 text-sm">
+          {["About Us", "Careers", "Blog", "Contact", "Privacy"].map(item => (
+            <li key={item}><a href="#" className="hover:text-purple-400 transition-colors">{item}</a></li>
+          ))}
+        </ul>
+      </div>
+
+      {/* Newsletter Column */}
+      <div>
+        <h4 className="text-white font-bold mb-6">Stay Updated</h4>
+        <p className="text-slate-500 text-sm mb-4">
+          Subscribe to our newsletter for the latest feature updates.
+        </p>
+        <div className="flex gap-2">
+          <input 
+            type="email" 
+            placeholder="Enter your email" 
+            className="bg-slate-900 border border-slate-800 rounded px-3 py-2 text-sm w-full focus:outline-none focus:border-purple-500 transition-colors"
+          />
+          <Button size="sm" className="bg-purple-600 hover:bg-purple-700">
+            Subscribe
+          </Button>
+        </div>
+      </div>
+    </div>
+
+    <div className="pt-8 border-t border-slate-900 flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-slate-600">
+      <p>&copy; 2025 YourSaaS Inc. All rights reserved.</p>
+      <div className="flex gap-8">
+        <span>Terms</span>
+        <span>Privacy</span>
+        <span>Cookies</span>
+      </div>
+    </div>
+  </div>
+</footer>
     </div>
   );
 }

@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { PartyPopper } from "lucide-react";
 import { CreateTaskButton } from "@/components/create-task-button";
-import { TaskCard } from "@/components/task-card";
+import { TaskCard } from "@/components/task-card";import { AnalyticsChart } from "@/components/analytics-chart";
 
 export default async function WorkspaceDashboard({ 
   params,
@@ -26,7 +26,8 @@ export default async function WorkspaceDashboard({
       }
     }
   });
-
+  const totalTasks = workspace.tasks.length;
+  const completedTasks = workspace.tasks.filter(t => t.status === "DONE").length;
   if (!workspace) return notFound();
 
   const isPro = workspace.plan === "PRO" || success === "true";
@@ -73,8 +74,13 @@ export default async function WorkspaceDashboard({
           </h2>
           
           {workspace.tasks.filter(t => t.status === "TODO").length === 0 && (
-            <div className="border-2 border-dashed rounded-xl p-8 text-center text-gray-400">
-              No pending tasks. Good job!
+            <div className="border-2 border-dashed border-gray-200 rounded-xl p-12 text-center bg-gray-50/50">
+              <div className="w-16 h-16 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                <PartyPopper className="w-8 h-8" />
+              </div>
+              <h3 className="font-bold text-gray-900 mb-1">All caught up!</h3>
+              <p className="text-gray-500 text-sm mb-6">You have no pending tasks. Enjoy your day.</p>
+              <CreateTaskButton workspaceId={workspace.id} members={workspace.members} />
             </div>
           )}
 
@@ -93,6 +99,26 @@ export default async function WorkspaceDashboard({
              <TaskCard key={task.id} task={task} workspaceId={workspaceId} />
           ))}
         </div>
+
+            <div className="p-6 bg-white rounded-xl border shadow-sm flex flex-col justify-between">
+      <div>
+        <h3 className="font-bold text-lg mb-1">Productivity</h3>
+        <p className="text-sm text-gray-500">Task completion rate</p>
+      </div>
+      
+        {isPro ? (
+          <div className="mt-4">
+            <AnalyticsChart total={totalTasks} completed={completedTasks} />
+          </div>
+        ) : (
+          <div className="h-48 flex flex-col items-center justify-center bg-gray-50 rounded border border-dashed mt-4">
+            <p className="text-gray-400 mb-2 text-sm">Analytics are locked.</p>
+            <a href={`/dashboard/${workspaceId}/billing`} className="text-purple-600 hover:underline text-sm font-medium">
+              Upgrade to PRO
+            </a>
+          </div>
+        )}
+      </div>
       </div>
     </div>
   );
