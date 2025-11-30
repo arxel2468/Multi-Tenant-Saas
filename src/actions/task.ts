@@ -11,6 +11,7 @@ export async function createTask(formData: FormData) {
   const workspaceId = formData.get("workspaceId") as string;
   const title = formData.get("title") as string;
   const assigneeId = formData.get("assigneeId") as string; // This is the Membership ID
+  const priority = (formData.get("priority") as string) || "MEDIUM";
 
   await prisma.task.create({
     data: {
@@ -18,6 +19,7 @@ export async function createTask(formData: FormData) {
       title,
       assignedToId: assigneeId === "none" ? null : assigneeId,
       status: "TODO",
+      priority,
     },
   });
 

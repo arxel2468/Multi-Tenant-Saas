@@ -3,7 +3,9 @@ import { notFound } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { PartyPopper } from "lucide-react";
 import { CreateTaskButton } from "@/components/create-task-button";
-import { TaskCard } from "@/components/task-card";import { AnalyticsChart } from "@/components/analytics-chart";
+import { TaskCard } from "@/components/task-card";
+import { AnalyticsChart } from "@/components/analytics-chart";
+import { FadeIn } from "@/components/ui/motion-wrapper";
 
 export default async function WorkspaceDashboard({ 
   params,
@@ -26,9 +28,9 @@ export default async function WorkspaceDashboard({
       }
     }
   });
+  if (!workspace) return notFound();
   const totalTasks = workspace.tasks.length;
   const completedTasks = workspace.tasks.filter(t => t.status === "DONE").length;
-  if (!workspace) return notFound();
 
   const isPro = workspace.plan === "PRO" || success === "true";
 
@@ -69,9 +71,12 @@ export default async function WorkspaceDashboard({
       <div className="grid md:grid-cols-3 gap-8">
         {/* TODO COLUMN */}
         <div className="col-span-2 space-y-4">
-          <h2 className="font-bold text-gray-500 text-sm uppercase tracking-wider">
-             Tasks ({workspace.tasks.filter(t => t.status === "TODO").length})
-          </h2>
+        {workspace.tasks.map((task, index) => (
+          // We add a tiny delay based on index so they cascade in beautifully
+          <FadeIn key={task.id} delay={index * 0.05}>
+            <TaskCard task={task} workspaceId={workspaceId} />
+          </FadeIn>
+        ))}
           
           {workspace.tasks.filter(t => t.status === "TODO").length === 0 && (
             <div className="border-2 border-dashed border-gray-200 rounded-xl p-12 text-center bg-gray-50/50">
@@ -83,10 +88,6 @@ export default async function WorkspaceDashboard({
               <CreateTaskButton workspaceId={workspace.id} members={workspace.members} />
             </div>
           )}
-
-          {workspace.tasks.filter(t => t.status === "TODO").map(task => (
-             <TaskCard key={task.id} task={task} workspaceId={workspaceId} />
-          ))}
         </div>
 
         {/* COMPLETED COLUMN */}

@@ -15,6 +15,7 @@ import {
 import { Plus } from "lucide-react";
 import { createTask } from "@/actions/task";
 import { useState } from "react";
+import { toast } from "sonner";
 
 // We pass the members list so we can assign people
 export function CreateTaskButton({ 
@@ -44,6 +45,7 @@ export function CreateTaskButton({
         <form action={async (formData) => {
             await createTask(formData);
             setOpen(false); // Close sheet after submit
+            toast.success("Task created successfully");
         }} className="space-y-4 mt-6">
           <input type="hidden" name="workspaceId" value={workspaceId} />
           
@@ -64,6 +66,17 @@ export function CreateTaskButton({
                   {m.userEmail || m.userId} ({m.role})
                 </option>
               ))}
+            </select>
+          </div>
+          <div>
+            <Label htmlFor="priority">Priority</Label>
+            <select 
+              name="priority"
+              className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm mt-2"
+            >
+              <option value="LOW">Low</option>
+              <option value="MEDIUM">Medium</option>
+              <option value="HIGH">High</option>
             </select>
           </div>
 

@@ -1,3 +1,4 @@
+
 import { UserButton } from "@clerk/nextjs";
 import { getWorkspaces } from "@/actions/workspace";
 import { CreateWorkspaceDialog } from "@/components/create-workspace-dialog";
@@ -31,7 +32,8 @@ export default async function Dashboard() {
             <CreateWorkspaceDialog />
           </div>
         ) : (
-          <div className="grid md:grid-cols-3 gap-6">
+          <div
+           className="grid md:grid-cols-3 gap-6">
             {workspaces.map((ws) => (
               <Link key={ws.id} href={`/dashboard/${ws.id}`}>
                 <Card className="p-6 hover:shadow-md transition-all cursor-pointer border-l-4 border-l-transparent hover:border-l-purple-600">

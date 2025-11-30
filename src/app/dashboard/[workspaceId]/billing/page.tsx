@@ -8,6 +8,8 @@ import { useUser } from "@clerk/nextjs"; // We need user email for pre-fill
 import { useState, useEffect } from "react";
 import Script from "next/script";
 import { useRouter } from "next/navigation";
+import { verifyPaymentAndUpgrade } from "@/actions/payment";
+
 
 // Define the Razorpay window object
 declare global {
@@ -55,9 +57,15 @@ export default function BillingPage({
         name: "YourSaaS Pro",
         description: "Upgrade to Pro Plan",
         order_id: orderId,
-        handler: function (response: any) {
-          // Success! 
-          // alert(`Payment ID: ${response.razorpay_payment_id}`);
+        handler: async function (response: any) {
+          // CALL SERVER TO SAVE TO DB
+          await verifyPaymentAndUpgrade(
+            workspaceId,
+            response.razorpay_order_id,
+            response.razorpay_payment_id,
+            response.razorpay_signature
+          );
+          
           router.push(`/dashboard/${workspaceId}?success=true`);
         },
         prefill: {

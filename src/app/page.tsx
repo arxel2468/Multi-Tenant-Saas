@@ -1,11 +1,13 @@
+"use client";
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ArrowRight, CheckCircle2, Layout, Users, ShieldCheck, Zap } from "lucide-react";
+import { motion } from "framer-motion"; 
 import { SignedIn, SignedOut, SignInButton } from "@clerk/nextjs";
 import Link from "next/link";
 import { LandingNav } from "@/components/landing-nav";
-
 export default function LandingPage() {
   return (
     <div className="min-h-screen bg-white text-slate-900 font-sans selection:bg-purple-100">
@@ -18,12 +20,17 @@ export default function LandingPage() {
           <Badge className="mb-6 bg-purple-50 text-purple-700 hover:bg-purple-100 px-4 py-1 rounded-full text-sm border border-purple-200">
             v1.0 is now live
           </Badge>
-          <h1 className="text-6xl md:text-7xl font-extrabold mb-8 tracking-tight leading-tight">
+          <motion.h1 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="text-6xl md:text-7xl font-extrabold mb-8..."
+          >
             Manage tasks, <br />
             <span className="bg-gradient-to-r from-purple-600 to-blue-500 bg-clip-text text-transparent">
               without the chaos.
             </span>
-          </h1>
+          </motion.h1>
           <p className="text-xl text-slate-600 mb-10 max-w-2xl mx-auto leading-relaxed">
             The simplest project management tool for high-performing teams. 
             Create workspaces, invite your team, and ship faster.

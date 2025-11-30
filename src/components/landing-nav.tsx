@@ -12,7 +12,7 @@ export function LandingNav() {
   const [open, setOpen] = useState(false);
 
   return (
-    <nav className="border-b sticky top-0 bg-white/80 backdrop-blur-md z-50">
+    <nav className="border-b sticky top-0 bg-white/70 backdrop-blur-md z-50">
       <div className="container mx-auto px-6 h-16 flex items-center justify-between">
         {/* Logo */}
         <div className="flex items-center gap-2 font-bold text-xl tracking-tight">
