@@ -3,7 +3,7 @@
 import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
-import { Trash2, Calendar, Clock } from "lucide-react";
+import { Trash2, Calendar, Clock, MessageSquare } from "lucide-react";
 import { toggleTaskStatus, deleteTask } from "@/actions/task";
 import { toast } from "sonner";
 import { formatDueDate, getDueDateColor, isOverdue } from "@/lib/date-utils";
@@ -17,21 +17,33 @@ const getPriorityColor = (p: string) => {
   }
 };
 
-export function TaskCard({ task, workspaceId }: { task: any, workspaceId: string }) {
+interface TaskCardProps {
+  task: any;
+  workspaceId: string;
+  onClick?: () => void;
+}
+
+export function TaskCard({ task, workspaceId, onClick }: TaskCardProps) {
   const overdue = isOverdue(task.dueDate) && task.status !== "DONE";
+  const commentCount = task._count?.comments || task.comments?.length || 0;
 
   return (
-    <Card className={`p-4 hover:shadow-md transition-all ${overdue ? 'border-red-300 bg-red-50/30' : ''}`}>
+    <Card 
+      className={`p-4 hover:shadow-md transition-all cursor-pointer ${overdue ? 'border-red-300 bg-red-50/30' : ''}`}
+      onClick={onClick}
+    >
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-start gap-3 flex-1">
-          <Checkbox 
-            checked={task.status === "DONE"}
-            onCheckedChange={async () => {
-              await toggleTaskStatus(task.id, task.status, workspaceId);
-              toast(task.status === "DONE" ? "Task reopened" : "Task completed");
-            }}
-            className="mt-1"
-          />
+          <div onClick={(e) => e.stopPropagation()}>
+            <Checkbox 
+              checked={task.status === "DONE"}
+              onCheckedChange={async () => {
+                await toggleTaskStatus(task.id, task.status, workspaceId);
+                toast(task.status === "DONE" ? "Task reopened" : "Task completed");
+              }}
+              className="mt-1"
+            />
+          </div>
           <div className="flex-1 min-w-0">
             <p className={`font-medium ${task.status === "DONE" ? "line-through text-gray-400" : ""}`}>
               {task.title}
@@ -52,6 +64,14 @@ export function TaskCard({ task, workspaceId }: { task: any, workspaceId: string
                 </Badge>
               )}
 
+              {/* Comment Count Badge */}
+              {commentCount > 0 && (
+                <Badge variant="secondary" className="text-[10px] px-2 py-0 h-5 flex items-center gap-1">
+                  <MessageSquare className="w-3 h-3" />
+                  {commentCount}
+                </Badge>
+              )}
+
               {/* Assignee Badge */}
               {task.assignee && (
                 <Badge variant="secondary" className="text-[10px] px-2 py-0 h-5">
@@ -63,7 +83,8 @@ export function TaskCard({ task, workspaceId }: { task: any, workspaceId: string
         </div>
 
         <button 
-          onClick={async () => {
+          onClick={async (e) => {
+            e.stopPropagation();
             await deleteTask(task.id, workspaceId);
             toast.error("Task deleted");
           }}

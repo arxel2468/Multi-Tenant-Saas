@@ -64,4 +64,17 @@ model Task {
 
   workspace    Workspace   @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   assignee     Membership? @relation(fields: [assignedToId], references: [id])
+  comments     Comment[]
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  content   String
+  taskId    String
+  userId    String
+  userEmail String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
 }

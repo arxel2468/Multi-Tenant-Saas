@@ -3,6 +3,7 @@
 import { useState, useCallback, useMemo } from "react";
 import { TaskFilters } from "@/components/task-filters";
 import { TaskCard } from "@/components/task-card";
+import { TaskDetailPanel } from "@/components/task-detail-panel";
 import { CreateTaskButton } from "@/components/create-task-button";
 import { FadeIn } from "@/components/ui/motion-wrapper";
 import { ClipboardList } from "lucide-react";
@@ -18,9 +19,10 @@ interface TaskListProps {
   tasks: any[];
   members: any[];
   workspaceId: string;
+  currentUserId: string;
 }
 
-export function TaskList({ tasks, members, workspaceId }: TaskListProps) {
+export function TaskList({ tasks, members, workspaceId, currentUserId }: TaskListProps) {
   const [filters, setFilters] = useState<FilterState>({
     search: "",
     status: "ALL",
@@ -28,11 +30,13 @@ export function TaskList({ tasks, members, workspaceId }: TaskListProps) {
     assignee: "ALL",
   });
 
+  // NEW: Panel state
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+
   const handleFilterChange = useCallback((newFilters: FilterState) => {
     setFilters(newFilters);
   }, []);
 
-  // Calculate task counts for filter badges
   const taskCounts = useMemo(() => ({
     total: tasks.length,
     todo: tasks.filter(t => t.status === "TODO").length,
@@ -42,10 +46,8 @@ export function TaskList({ tasks, members, workspaceId }: TaskListProps) {
     low: tasks.filter(t => t.priority === "LOW").length,
   }), [tasks]);
 
-  // Apply filters
   const filteredTasks = useMemo(() => {
     return tasks.filter(task => {
-      // Search filter
       if (filters.search) {
         const searchLower = filters.search.toLowerCase();
         const titleMatch = task.title.toLowerCase().includes(searchLower);
@@ -53,17 +55,14 @@ export function TaskList({ tasks, members, workspaceId }: TaskListProps) {
         if (!titleMatch && !assigneeMatch) return false;
       }
 
-      // Status filter
       if (filters.status !== "ALL" && task.status !== filters.status) {
         return false;
       }
 
-      // Priority filter
       if (filters.priority !== "ALL" && task.priority !== filters.priority) {
         return false;
       }
 
-      // Assignee filter
       if (filters.assignee === "UNASSIGNED" && task.assignedToId !== null) {
         return false;
       }
@@ -75,7 +74,6 @@ export function TaskList({ tasks, members, workspaceId }: TaskListProps) {
     });
   }, [tasks, filters]);
 
-  // Separate by status for display
   const todoTasks = filteredTasks.filter(t => t.status === "TODO");
   const doneTasks = filteredTasks.filter(t => t.status === "DONE");
 
@@ -131,7 +129,11 @@ export function TaskList({ tasks, members, workspaceId }: TaskListProps) {
 
           {todoTasks.map((task, index) => (
             <FadeIn key={task.id} delay={index * 0.03}>
-              <TaskCard task={task} workspaceId={workspaceId} />
+              <TaskCard 
+                task={task} 
+                workspaceId={workspaceId} 
+                onClick={() => setSelectedTaskId(task.id)}
+              />
             </FadeIn>
           ))}
         </div>
@@ -152,13 +154,25 @@ export function TaskList({ tasks, members, workspaceId }: TaskListProps) {
             {doneTasks.map((task, index) => (
               <FadeIn key={task.id} delay={index * 0.03}>
                 <div className="mb-3">
-                  <TaskCard task={task} workspaceId={workspaceId} />
+                  <TaskCard 
+                    task={task} 
+                    workspaceId={workspaceId}
+                    onClick={() => setSelectedTaskId(task.id)} 
+                  />
                 </div>
               </FadeIn>
             ))}
           </div>
         </div>
       </div>
+
+      {/* Task Detail Panel */}
+      <TaskDetailPanel 
+        taskId={selectedTaskId}
+        workspaceId={workspaceId}
+        currentUserId={currentUserId}
+        onClose={() => setSelectedTaskId(null)}
+      />
     </div>
   );
 }

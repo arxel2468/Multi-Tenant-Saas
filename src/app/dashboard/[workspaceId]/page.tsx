@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
+import { auth } from "@cleark/nextjs/server";
 import { Button } from "@/components/ui/button";
 import { Clock, PartyPopper } from "lucide-react";
 import { CreateTaskButton } from "@/components/create-task-button";
@@ -17,6 +18,7 @@ export default async function WorkspaceDashboard({
 }) {
   const { workspaceId } = await params;
   const { success } = await searchParams;
+  const { userId } = await auth();
 
   const workspace = await prisma.workspace.findUnique({
     where: { id: workspaceId },
@@ -24,7 +26,12 @@ export default async function WorkspaceDashboard({
       members: true,
       tasks: {
         orderBy: { createdAt: "desc" },
-        include: { assignee: true }
+        include: { 
+          assignee: true,
+          _count: {
+            select: { comments: true }
+          }
+        }
       }
     }
   });
@@ -115,7 +122,8 @@ export default async function WorkspaceDashboard({
               <TaskList 
                 tasks={workspace.tasks} 
                 members={workspace.members} 
-                workspaceId={workspaceId} 
+                workspaceId={workspaceId}
+                currentUserId={userId || ""}
               />
             </FadeIn>
           </div>
