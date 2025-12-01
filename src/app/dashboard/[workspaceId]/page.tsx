@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
-import { auth } from "@cleark/nextjs/server";
+import { auth } from "@clerk/nextjs/server";
 import { Button } from "@/components/ui/button";
 import { Clock, PartyPopper } from "lucide-react";
 import { CreateTaskButton } from "@/components/create-task-button";
