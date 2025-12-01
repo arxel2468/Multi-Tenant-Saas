@@ -30,7 +30,7 @@ export function TaskCard({ task, workspaceId, onClick }: TaskCardProps) {
   const overdue = isOverdue(task.dueDate) && task.status !== "DONE";
   const commentCount = task._count?.comments || task.comments?.length || 0;
   const permissions = getPermissions(userRole as Role);
-  const canDelete = permissions.canDeleteTask(task.createById || "", currentUserId)
+  const canDelete = permissions.canDeleteTask(task.createById || "", currentUserId);
 
   return (
     <Card 
@@ -86,18 +86,19 @@ export function TaskCard({ task, workspaceId, onClick }: TaskCardProps) {
             </div>
           </div>
         </div>
-
         {canDelete && (
           <button 
-            onClick={async (e) => {
-              e.stopPropagation();
-              await deleteTask(task.id, workspaceId);
-              toast.error("Task deleted");
-            }}
-            className="text-gray-400 hover:text-red-500 transition-colors p-1"
-          >
-            <Trash2 className="w-4 h-4" />
-          </button>
+          onClick={async (e) => {
+            e.stopPropagation();
+            await deleteTask(task.id, workspaceId);
+            toast.error("Task deleted");
+          }}
+          className="text-gray-400 hover:text-red-500 transition-colors p-1"
+        >
+          <Trash2 className="w-4 h-4" />
+        </button>
+        )}
+        
       </div>
     </Card>
   );
