@@ -9,6 +9,10 @@ import { useState, useEffect } from "react";
 import Script from "next/script";
 import { useRouter } from "next/navigation";
 import { verifyPaymentAndUpgrade } from "@/actions/payment";
+import { auth } from "@clerk/nextjs/server";
+import { prisma } from "@/lib/prisma";
+import { getPermissions, Role } from "@/lib/permissions";
+import { redirect } from "next/navigation";
 
 
 // Define the Razorpay window object
@@ -88,6 +92,25 @@ export default function BillingPage({
       setLoading(false);
     }
   };
+
+  const { userId } = await auth();
+    if (!userId) redirect("/sign-in");
+
+    const membership = await prisma.membership.findUnique({
+      where: {
+        userId_workspaceId: {
+          userId,
+          workspaceId,
+        },
+      },
+    });
+
+    if (!membership) redirect("/dashboard");
+
+    const permissions = getPermissions(membership.role as Role);
+    if (!permissions.canAccessBilling) {
+      redirect(`/dashboard/${workspaceId}`);
+  }
 
   return (
     <>

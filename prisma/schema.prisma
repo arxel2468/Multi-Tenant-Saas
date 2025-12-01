@@ -57,8 +57,11 @@ model Task {
   status       String      @default("TODO")
   priority     String      @default("MEDIUM") 
   dueDate      DateTime?
+  assignedToId String?  
 
-  assignedToId String?     
+  createdByID  String
+  createdByEmail  String?
+
   createdAt    DateTime    @default(now())
   updatedAt    DateTime    @updatedAt
 

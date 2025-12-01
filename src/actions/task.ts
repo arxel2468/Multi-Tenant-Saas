@@ -1,18 +1,28 @@
 "use server";
 
-import { auth } from "@clerk/nextjs/server";
+import { auth, currentUser } from "@clerk/nextjs/server";
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
+import { getCurrentMembership } from "@/lib/check-permission";
+import { getPermissions, Role } from "@/lib/permissions";
 
 export async function createTask(formData: FormData) {
-  const { userId } = await auth(); // Next 15 await
-  if (!userId) throw new Error("Unauthorized");
+  const user = await currentUser();
+  if (!user) throw new Error("Unauthorized");
 
   const workspaceId = formData.get("workspaceId") as string;
+  
+  // Check membership
+  const membership = await getCurrentMembership(workspaceId);
+  if (!membership) throw new Error("You are not a member of this workspace");
+
+  const permissions = getPermissions(membership.role as Role);
+  if (!permissions.canCreateTask) throw new Error("You do not have permission to create tasks");
+
   const title = formData.get("title") as string;
-  const assigneeId = formData.get("assigneeId") as string; // This is the Membership ID
+  const assigneeId = formData.get("assigneeId") as string;
   const priority = (formData.get("priority") as string) || "MEDIUM";
-  const dueDateString = formData.get("dueDate")as string;
+  const dueDateString = formData.get("dueDate") as string;
   const dueDate = dueDateString ? new Date(dueDateString) : null;
 
   await prisma.task.create({
@@ -23,6 +33,8 @@ export async function createTask(formData: FormData) {
       status: "TODO",
       priority,
       dueDate,
+      createdById: user.id,
+      createdByEmail: user.emailAddresses[0].emailAddress,
     },
   });
 
@@ -32,6 +44,22 @@ export async function createTask(formData: FormData) {
 export async function deleteTask(taskId: string, workspaceId: string) {
   const { userId } = await auth();
   if (!userId) throw new Error("Unauthorized");
+
+  const membership = await getCurrentMembership(workspaceId);
+  if (!membership) throw new Error("You are not a member of this workspace");
+
+  const task = await prisma.task.findUnique({
+    where: { id: taskId },
+  });
+
+  if (!task) throw new Error("Task not found");
+
+  const permissions = getPermissions(membership.role as Role);
+  const canDelete = permissions.canDeleteTask(task.createdById, userId);
+
+  if (!canDelete) {
+    throw new Error("You do not have permission to delete this task");
+  }
 
   await prisma.task.delete({
     where: { id: taskId },
@@ -44,7 +72,51 @@ export async function toggleTaskStatus(taskId: string, currentStatus: string, wo
   const { userId } = await auth();
   if (!userId) throw new Error("Unauthorized");
 
+  const membership = await getCurrentMembership(workspaceId);
+  if (!membership) throw new Error("You are not a member of this workspace");
+
+  const task = await prisma.task.findUnique({
+    where: { id: taskId },
+  });
+
+  if (!task) throw new Error("Task not found");
+
+  const permissions = getPermissions(membership.role as Role);
+  const canEdit = permissions.canEditTask(task.createdById, userId);
+
+  if (!canEdit) {
+    throw new Error("You do not have permission to edit this task");
+  }
+
   const newStatus = currentStatus === "TODO" ? "DONE" : "TODO";
+
+  await prisma.task.update({
+    where: { id: taskId },
+    data: { status: newStatus },
+  });
+
+  revalidatePath(`/dashboard/${workspaceId}`);
+}
+
+export async function updateTaskStatusAndOrder(taskId: string, newStatus: string, workspaceId: string) {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+
+  const membership = await getCurrentMembership(workspaceId);
+  if (!membership) throw new Error("You are not a member of this workspace");
+
+  const task = await prisma.task.findUnique({
+    where: { id: taskId },
+  });
+
+  if (!task) throw new Error("Task not found");
+
+  const permissions = getPermissions(membership.role as Role);
+  const canEdit = permissions.canEditTask(task.createdById, userId);
+
+  if (!canEdit) {
+    throw new Error("You do not have permission to edit this task");
+  }
 
   await prisma.task.update({
     where: { id: taskId },

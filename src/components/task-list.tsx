@@ -20,6 +20,7 @@ interface TaskListProps {
   members: any[];
   workspaceId: string;
   currentUserId: string;
+  userRole: string;
 }
 
 export function TaskList({ tasks, members, workspaceId, currentUserId }: TaskListProps) {
@@ -133,6 +134,8 @@ export function TaskList({ tasks, members, workspaceId, currentUserId }: TaskLis
                 task={task} 
                 workspaceId={workspaceId} 
                 onClick={() => setSelectedTaskId(task.id)}
+                currentUserId={currentUserId}
+                userRole={userRole}
               />
             </FadeIn>
           ))}

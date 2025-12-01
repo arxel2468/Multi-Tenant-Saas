@@ -8,6 +8,7 @@ import { TaskList } from "@/components/task-list";
 import { AnalyticsChart } from "@/components/analytics-chart";
 import { isOverdue } from "@/lib/date-utils";
 import { FadeIn } from "@/components/ui/motion-wrapper";
+import { getPermissions, Role } from "@/lib/permissions";
 
 export default async function WorkspaceDashboard({ 
   params,
@@ -47,6 +48,11 @@ export default async function WorkspaceDashboard({
     t => t.status !== "DONE" && isOverdue(t.dueDate)
   );
 
+  // After getting currentMembership, add:
+  const currentMembership = workspace.members.find(m => m.userId === userId);
+  const userRole = (currentMembership?.role || "MEMBER") as Role;
+  const permissions = getPermissions(userRole);
+
   return (
     <div className="min-h-screen bg-slate-50/50">
       <div className="p-8 max-w-7xl mx-auto">
@@ -72,9 +78,11 @@ export default async function WorkspaceDashboard({
               <a href={`/dashboard/${workspaceId}/settings`}>
                 <Button variant="outline">Settings</Button>
               </a>
-              <a href={`/dashboard/${workspaceId}/billing`}>
-                <Button variant="outline">Billing</Button>
-              </a>
+              {permissions.canAccessBilling && (
+                <a href={`/dashboard/${workspaceId}/billing`}>
+                  <Button variant="outline">Billing</Button>
+                </a>
+                )}
             </div>
           </div>
         </FadeIn>
@@ -124,6 +132,7 @@ export default async function WorkspaceDashboard({
                 members={workspace.members} 
                 workspaceId={workspaceId}
                 currentUserId={userId || ""}
+                userRole={userRole}
               />
             </FadeIn>
           </div>

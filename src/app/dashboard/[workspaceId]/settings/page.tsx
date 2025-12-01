@@ -1,10 +1,15 @@
 import { prisma } from "@/lib/prisma";
-import { auth } from "@clerk/nextjs/server"; // Updated import for Next 15
+import { auth } from "@clerk/nextjs/server";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { createInvite } from "@/actions/invite";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { createInvite } from "@/actions/invite";
+import { changeMemberRole, removeMember } from "@/actions/member";
+import { getPermissions, getRoleLabel, getRoleBadgeColor, Role } from "@/lib/permissions";
+import { Crown, Shield, User, UserMinus, Mail } from "lucide-react";
+import { redirect } from "next/navigation";
 
 export default async function SettingsPage({ 
   params 
@@ -12,89 +17,234 @@ export default async function SettingsPage({
   params: Promise<{ workspaceId: string }> 
 }) {
   const { workspaceId } = await params;
-  const { userId } = await auth(); // Await auth() in Next 15
+  const { userId } = await auth();
+
+  if (!userId) redirect("/sign-in");
 
   const workspace = await prisma.workspace.findUnique({
     where: { id: workspaceId },
     include: {
-      members: true,
-      invitations: true,
+      members: {
+        orderBy: { role: "asc" },
+      },
+      invitations: {
+        where: { status: "PENDING" },
+      },
     },
   });
 
   if (!workspace) return <div>Workspace not found</div>;
 
+  const currentMembership = workspace.members.find(m => m.userId === userId);
+  if (!currentMembership) redirect("/dashboard");
+
+  const permissions = getPermissions(currentMembership.role as Role);
+
+  const getRoleIcon = (role: string) => {
+    switch (role) {
+      case "OWNER": return <Crown className="w-4 h-4" />;
+      case "ADMIN": return <Shield className="w-4 h-4" />;
+      default: return <User className="w-4 h-4" />;
+    }
+  };
+
   return (
-    <div className="p-8 max-w-4xl">
-      <h1 className="text-3xl font-bold mb-2">Team Settings</h1>
-      <p className="text-gray-500 mb-8">Manage your team members and invites.</p>
+    <div className="min-h-screen bg-slate-50/50">
+      <div className="p-8 max-w-4xl mx-auto">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold">Team Settings</h1>
+          <p className="text-slate-500 mt-1">Manage your team members and permissions.</p>
+        </div>
 
-      <div className="grid gap-8">
-        {/* Invite Section */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Invite a Member</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form action={async (formData) => {
-              "use server";
-              // We wrap this to handle the redirect/UI updates
-              await createInvite(formData);
-            }} className="flex gap-2">
-              <input type="hidden" name="workspaceId" value={workspace.id} />
-              <Input name="email" placeholder="colleague@example.com" required type="email" />
-              <Button type="submit">Generate Invite Link</Button>
-            </form>
-            <p className="text-xs text-gray-500 mt-2">
-              * This will generate a Magic Link below. Copy and send it to them.
-            </p>
-          </CardContent>
-        </Card>
-
-        {/* Pending Invites */}
-        {workspace.invitations.filter(i => i.status === "PENDING").length > 0 && (
-           <Card>
+        <div className="space-y-8">
+          {/* Your Role Card */}
+          <Card>
             <CardHeader>
-              <CardTitle>Pending Invites</CardTitle>
+              <CardTitle className="text-lg">Your Role</CardTitle>
+              <CardDescription>Your current permissions in this workspace</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              {workspace.invitations.filter(i => i.status === "PENDING").map(inv => (
-                <div key={inv.id} className="flex justify-between items-center border p-3 rounded">
-                  <div>
-                    <p className="font-medium">{inv.email}</p>
-                    <p className="text-xs text-gray-400">Link: {process.env.NEXT_PUBLIC_APP_URL}/invite/{inv.token}</p>
-                  </div>
-                  <Button variant="outline" size="sm" disabled>Pending</Button>
+            <CardContent>
+              <div className="flex items-center gap-3">
+                <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
+                  currentMembership.role === "OWNER" ? "bg-purple-100 text-purple-600" :
+                  currentMembership.role === "ADMIN" ? "bg-blue-100 text-blue-600" :
+                  "bg-slate-100 text-slate-600"
+                }`}>
+                  {getRoleIcon(currentMembership.role)}
                 </div>
-              ))}
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Member List */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Team Members ({workspace.members.length})</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {workspace.members.map(member => (
-              <div key={member.id} className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <Avatar>
-                    <AvatarFallback>{member.role[0]}</AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <p className="font-medium">
-                        {member.userEmail || member.userId}
-                        {member.userId === userId ? "You" : ""}
-                    </p>
-                    <p className="text-xs text-gray-500">{member.role}</p>
-                  </div>
+                <div>
+                  <p className="font-semibold">{getRoleLabel(currentMembership.role as Role)}</p>
+                  <p className="text-sm text-slate-500">
+                    {currentMembership.role === "OWNER" && "Full control over workspace"}
+                    {currentMembership.role === "ADMIN" && "Can manage tasks and invite members"}
+                    {currentMembership.role === "MEMBER" && "Can create and manage own tasks"}
+                  </p>
                 </div>
               </div>
-            ))}
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+
+          {/* Invite Section (Only for OWNER and ADMIN) */}
+          {permissions.canInviteMembers && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Mail className="w-5 h-5" />
+                  Invite a Member
+                </CardTitle>
+                <CardDescription>Send an invitation link to add new team members</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <form action={async (formData) => {
+                  "use server";
+                  await createInvite(formData);
+                }} className="flex gap-2">
+                  <input type="hidden" name="workspaceId" value={workspace.id} />
+                  <Input 
+                    name="email" 
+                    placeholder="colleague@example.com" 
+                    required 
+                    type="email"
+                    className="flex-1"
+                  />
+                  <Button type="submit">Generate Invite Link</Button>
+                </form>
+                <p className="text-xs text-slate-500 mt-2">
+                  New members will join with the "Member" role.
+                </p>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Pending Invites */}
+          {permissions.canInviteMembers && workspace.invitations.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Pending Invites ({workspace.invitations.length})</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {workspace.invitations.map(inv => (
+                  <div key={inv.id} className="flex justify-between items-center p-3 bg-slate-50 rounded-lg">
+                    <div>
+                      <p className="font-medium text-sm">{inv.email}</p>
+                      <p className="text-xs text-slate-400 font-mono">
+                        {process.env.NEXT_PUBLIC_APP_URL}/invite/{inv.token}
+                      </p>
+                    </div>
+                    <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">
+                      Pending
+                    </Badge>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Member List */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Team Members ({workspace.members.length})</CardTitle>
+              <CardDescription>Manage roles and permissions for your team</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {workspace.members.map(member => {
+                const isCurrentUser = member.userId === userId;
+                const canManage = permissions.canChangeRoles && 
+                  !isCurrentUser && 
+                  member.role !== "OWNER";
+                const canRemove = permissions.canRemoveMembers && 
+                  !isCurrentUser && 
+                  member.role !== "OWNER";
+
+                return (
+                  <div key={member.id} className="flex items-center justify-between p-3 rounded-lg border bg-white">
+                    <div className="flex items-center gap-3">
+                      <Avatar className={`w-10 h-10 ${
+                        member.role === "OWNER" ? "ring-2 ring-purple-500 ring-offset-2" : ""
+                      }`}>
+                        <AvatarFallback className={
+                          member.role === "OWNER" ? "bg-purple-100 text-purple-700" :
+                          member.role === "ADMIN" ? "bg-blue-100 text-blue-700" :
+                          "bg-slate-100 text-slate-700"
+                        }>
+                          {(member.userEmail || member.userId)[0].toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <p className="font-medium text-sm flex items-center gap-2">
+                          {member.userEmail || member.userId}
+                          {isCurrentUser && (
+                            <span className="text-xs text-slate-400">(You)</span>
+                          )}
+                        </p>
+                        <Badge variant="outline" className={`${getRoleBadgeColor(member.role as Role)} text-xs mt-1`}>
+                          {getRoleIcon(member.role)}
+                          <span className="ml-1">{getRoleLabel(member.role as Role)}</span>
+                        </Badge>
+                      </div>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="flex items-center gap-2">
+                      {canManage && (
+                        <form action={async (formData) => {
+                          "use server";
+                          const newRole = formData.get("role") as Role;
+                          await changeMemberRole(member.id, newRole, workspaceId);
+                        }}>
+                          <select 
+                            name="role"
+                            defaultValue={member.role}
+                            onChange={(e) => {
+                              const form = e.target.closest('form');
+                              if (form) form.requestSubmit();
+                            }}
+                            className="text-sm border rounded px-2 py-1 bg-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+                          >
+                            <option value="ADMIN">Admin</option>
+                            <option value="MEMBER">Member</option>
+                          </select>
+                        </form>
+                      )}
+
+                      {canRemove && (
+                        <form action={async () => {
+                          "use server";
+                          await removeMember(member.id, workspaceId);
+                        }}>
+                          <Button type="submit" variant="ghost" size="sm" className="text-red-500 hover:text-red-600 hover:bg-red-50">
+                            <UserMinus className="w-4 h-4" />
+                          </Button>
+                        </form>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </CardContent>
+          </Card>
+
+          {/* Danger Zone (Only for OWNER) */}
+          {permissions.canDeleteWorkspace && (
+            <Card className="border-red-200">
+              <CardHeader>
+                <CardTitle className="text-lg text-red-600">Danger Zone</CardTitle>
+                <CardDescription>Irreversible actions for this workspace</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center justify-between p-4 bg-red-50 rounded-lg">
+                  <div>
+                    <p className="font-medium text-red-800">Delete Workspace</p>
+                    <p className="text-sm text-red-600">All tasks, members, and data will be permanently deleted.</p>
+                  </div>
+                  <Button variant="destructive" disabled>
+                    Delete (Coming Soon)
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </div>
       </div>
     </div>
   );
