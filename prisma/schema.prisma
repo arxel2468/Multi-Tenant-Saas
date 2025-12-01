@@ -54,11 +54,11 @@ model Task {
   workspaceId  String
   title        String
   description  String?
-  status       String      @default("TODO") // "TODO" or "DONE"
-  priority     String      @default("MEDIUM") // LOW, MEDIUM, HIGH
-  
+  status       String      @default("TODO")
+  priority     String      @default("MEDIUM") 
+  dueDate      DateTime?
+
   assignedToId String?     
-  
   createdAt    DateTime    @default(now())
   updatedAt    DateTime    @updatedAt
 

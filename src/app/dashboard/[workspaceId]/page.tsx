@@ -6,6 +6,8 @@ import { CreateTaskButton } from "@/components/create-task-button";
 import { TaskCard } from "@/components/task-card";
 import { AnalyticsChart } from "@/components/analytics-chart";
 import { FadeIn } from "@/components/ui/motion-wrapper";
+import { Clock } from "lucide-react";
+import { isOverdue } from "@/lib/date-utils";
 
 export default async function WorkspaceDashboard({ 
   params,
@@ -29,6 +31,9 @@ export default async function WorkspaceDashboard({
     }
   });
   if (!workspace) return notFound();
+  const overdueTasks = workspace.tasks.filter(
+    t => t.status !== "DONE" && isOverdue(t.dueDate)
+  );
   const totalTasks = workspace.tasks.length;
   const completedTasks = workspace.tasks.filter(t => t.status === "DONE").length;
 
@@ -66,7 +71,23 @@ export default async function WorkspaceDashboard({
           </div>
         </div>
       )}
-
+      {/* Overdue Alert Banner */}
+      {overdueTasks.length > 0 && (
+        <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-6 flex items-center gap-4">
+          <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
+            <Clock className="w-6 h-6 text-red-600" />
+          </div>
+          <div>
+            <h3 className="font-bold text-red-800">
+              {overdueTasks.length} task{overdueTasks.length > 1 ? 's' : ''} overdue
+            </h3>
+            <p className="text-red-600 text-sm">
+              {overdueTasks.map(t => t.title).slice(0, 3).join(", ")}
+              {overdueTasks.length > 3 ? ` and ${overdueTasks.length - 3} more...` : ""}
+            </p>
+          </div>
+        </div>
+      )}
       {/* Task Board */}
       <div className="grid md:grid-cols-3 gap-8">
         {/* TODO COLUMN */}

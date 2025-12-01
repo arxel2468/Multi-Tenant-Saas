@@ -10,20 +10,18 @@ import {
   SheetHeader,
   SheetTitle,
   SheetTrigger,
-  SheetClose,
 } from "@/components/ui/sheet";
 import { Plus } from "lucide-react";
 import { createTask } from "@/actions/task";
 import { useState } from "react";
 import { toast } from "sonner";
 
-// We pass the members list so we can assign people
 export function CreateTaskButton({ 
   workspaceId, 
   members 
 }: { 
   workspaceId: string;
-  members: any[]; // We'll type this properly in the parent
+  members: any[];
 }) {
   const [open, setOpen] = useState(false);
 
@@ -44,21 +42,53 @@ export function CreateTaskButton({
         
         <form action={async (formData) => {
             await createTask(formData);
-            setOpen(false); // Close sheet after submit
+            setOpen(false);
             toast.success("Task created successfully");
         }} className="space-y-4 mt-6">
           <input type="hidden" name="workspaceId" value={workspaceId} />
           
+          {/* Title */}
           <div>
             <Label htmlFor="title">Task Title</Label>
-            <Input id="title" name="title" placeholder="e.g. Redesign Homepage" required className="mt-2" />
+            <Input 
+              id="title" 
+              name="title" 
+              placeholder="e.g. Redesign Homepage" 
+              required 
+              className="mt-2" 
+            />
           </div>
 
+          {/* Priority */}
+          <div>
+            <Label htmlFor="priority">Priority</Label>
+            <select 
+              name="priority"
+              className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm mt-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
+            >
+              <option value="LOW">Low</option>
+              <option value="MEDIUM" selected>Medium</option>
+              <option value="HIGH">High</option>
+            </select>
+          </div>
+
+          {/* Due Date - NEW */}
+          <div>
+            <Label htmlFor="dueDate">Due Date</Label>
+            <Input 
+              id="dueDate" 
+              name="dueDate" 
+              type="date"
+              className="mt-2" 
+            />
+          </div>
+
+          {/* Assignee */}
           <div>
             <Label htmlFor="assignee">Assign To</Label>
             <select 
               name="assigneeId" 
-              className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 mt-2"
+              className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm mt-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
             >
               <option value="none">No one</option>
               {members.map((m) => (
@@ -66,17 +96,6 @@ export function CreateTaskButton({
                   {m.userEmail || m.userId} ({m.role})
                 </option>
               ))}
-            </select>
-          </div>
-          <div>
-            <Label htmlFor="priority">Priority</Label>
-            <select 
-              name="priority"
-              className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm mt-2"
-            >
-              <option value="LOW">Low</option>
-              <option value="MEDIUM">Medium</option>
-              <option value="HIGH">High</option>
             </select>
           </div>
 

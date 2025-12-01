@@ -1,59 +1,77 @@
 "use client";
 
 import { Card } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox"; // You might need to install this: npx shadcn-ui@latest add checkbox
+import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
-import { Trash2 } from "lucide-react";
+import { Trash2, Calendar, Clock } from "lucide-react";
 import { toggleTaskStatus, deleteTask } from "@/actions/task";
 import { toast } from "sonner";
+import { formatDueDate, getDueDateColor, isOverdue } from "@/lib/date-utils";
+
+const getPriorityColor = (p: string) => {
+  switch(p) {
+    case "HIGH": return "bg-red-100 text-red-700 border-red-200";
+    case "MEDIUM": return "bg-yellow-100 text-yellow-700 border-yellow-200";
+    case "LOW": return "bg-slate-100 text-slate-700 border-slate-200";
+    default: return "bg-slate-100 text-slate-700";
+  }
+};
 
 export function TaskCard({ task, workspaceId }: { task: any, workspaceId: string }) {
-
-  // Helper function for colors
-  const getPriorityColor = (p: string) => {
-    switch(p) {
-      case "HIGH": return "bg-red-100 text-red-700 border-red-200";
-      case "MEDIUM": return "bg-yellow-100 text-yellow-700 border-yellow-200";
-      case "LOW": return "bg-slate-100 text-slate-700 border-slate-200";
-      default: return "bg-slate-100 text-slate-700";
-    }
-  }
+  const overdue = isOverdue(task.dueDate) && task.status !== "DONE";
 
   return (
-    <Card className="p-4 flex items-center justify-between hover:shadow-md transition-all">
-      <div className="flex items-center gap-4">
-        <Checkbox 
-          checked={task.status === "DONE"}
-          onCheckedChange={async () => {
-            await toggleTaskStatus(task.id, task.status, workspaceId);
-            toast("Task status updated");
-          }}
-        />
-        <div>
-          <p className={`font-medium ${task.status === "DONE" ? "line-through text-gray-400" : ""}`}>
-            {task.title}
-          </p>
-          {/* Priority Badge */}
-          <Badge variant="outline" className={`${getPriorityColor(task.priority)} text-[10px] px-1 py-0 h-5 border`}>
-              {task.priority}
-          </Badge>
-          {task.assignee && (
-            <div className="flex items-center gap-2 mt-1">
-               <Badge variant="secondary" className="text-[10px] px-1 py-0 h-5">
-                 Assigned to: {task.assignee.userEmail || task.assignee.userId} 
-               </Badge>
-            </div>
-          )}
-        </div>
-      </div>
+    <Card className={`p-4 hover:shadow-md transition-all ${overdue ? 'border-red-300 bg-red-50/30' : ''}`}>
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex items-start gap-3 flex-1">
+          <Checkbox 
+            checked={task.status === "DONE"}
+            onCheckedChange={async () => {
+              await toggleTaskStatus(task.id, task.status, workspaceId);
+              toast(task.status === "DONE" ? "Task reopened" : "Task completed");
+            }}
+            className="mt-1"
+          />
+          <div className="flex-1 min-w-0">
+            <p className={`font-medium ${task.status === "DONE" ? "line-through text-gray-400" : ""}`}>
+              {task.title}
+            </p>
+            
+            {/* Badges Row */}
+            <div className="flex flex-wrap items-center gap-2 mt-2">
+              {/* Priority Badge */}
+              <Badge variant="outline" className={`${getPriorityColor(task.priority)} text-[10px] px-2 py-0 h-5 border`}>
+                {task.priority}
+              </Badge>
 
-      <button 
-        onClick={async () => {
-          await deleteTask(task.id, workspaceId);
-          toast.error("Task deleted");
-        }}>
-        <Trash2 className="w-4 h-4" />
-      </button>
+              {/* Due Date Badge */}
+              {task.dueDate && (
+                <Badge variant="outline" className={`${getDueDateColor(task.dueDate, task.status)} text-[10px] px-2 py-0 h-5 border flex items-center gap-1`}>
+                  {overdue ? <Clock className="w-3 h-3" /> : <Calendar className="w-3 h-3" />}
+                  {formatDueDate(task.dueDate)}
+                </Badge>
+              )}
+
+              {/* Assignee Badge */}
+              {task.assignee && (
+                <Badge variant="secondary" className="text-[10px] px-2 py-0 h-5">
+                  {task.assignee.userEmail || task.assignee.userId}
+                </Badge>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <button 
+          onClick={async () => {
+            await deleteTask(task.id, workspaceId);
+            toast.error("Task deleted");
+          }}
+          className="text-gray-400 hover:text-red-500 transition-colors p-1"
+        >
+          <Trash2 className="w-4 h-4" />
+        </button>
+      </div>
     </Card>
   );
 }
