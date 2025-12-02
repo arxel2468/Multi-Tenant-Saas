@@ -23,7 +23,8 @@ interface TaskListProps {
   userRole: string;
 }
 
-export function TaskList({ tasks, members, workspaceId, currentUserId }: TaskListProps) {
+// FIX: Added userRole to destructuring
+export function TaskList({ tasks, members, workspaceId, currentUserId, userRole }: TaskListProps) {
   const [filters, setFilters] = useState<FilterState>({
     search: "",
     status: "ALL",
@@ -31,7 +32,6 @@ export function TaskList({ tasks, members, workspaceId, currentUserId }: TaskLis
     assignee: "ALL",
   });
 
-  // NEW: Panel state
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
 
   const handleFilterChange = useCallback((newFilters: FilterState) => {
@@ -157,10 +157,13 @@ export function TaskList({ tasks, members, workspaceId, currentUserId }: TaskLis
             {doneTasks.map((task, index) => (
               <FadeIn key={task.id} delay={index * 0.03}>
                 <div className="mb-3">
+                  {/* FIX: Added currentUserId and userRole */}
                   <TaskCard 
                     task={task} 
                     workspaceId={workspaceId}
-                    onClick={() => setSelectedTaskId(task.id)} 
+                    onClick={() => setSelectedTaskId(task.id)}
+                    currentUserId={currentUserId}
+                    userRole={userRole}
                   />
                 </div>
               </FadeIn>
