@@ -1,13 +1,13 @@
 import { prisma } from "@/lib/prisma";
 import { auth } from "@clerk/nextjs/server";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { InviteForm } from "@/components/invite-form";
-import { changeMemberRole, removeMember } from "@/actions/member";
+import { RoleSelector } from "@/components/role-selector";
+import { RemoveMemberButton } from "@/components/remove-member-button";
 import { getPermissions, getRoleLabel, getRoleBadgeColor, Role } from "@/lib/permissions";
-import { Crown, Shield, User, UserMinus, Mail } from "lucide-react";
+import { Crown, Shield, User, Mail } from "lucide-react";
 import { redirect } from "next/navigation";
 
 export default async function SettingsPage({ 
@@ -84,7 +84,7 @@ export default async function SettingsPage({
             </CardContent>
           </Card>
 
-          {/* Invite Section (Only for OWNER and ADMIN) */}
+          {/* Invite Section */}
           {permissions.canInviteMembers && (
             <Card>
               <CardHeader>
@@ -171,35 +171,18 @@ export default async function SettingsPage({
                     {/* Actions */}
                     <div className="flex items-center gap-2">
                       {canManage && (
-                        <form action={async (formData) => {
-                          "use server";
-                          const newRole = formData.get("role") as Role;
-                          await changeMemberRole(member.id, newRole, workspaceId);
-                        }}>
-                          <select 
-                            name="role"
-                            defaultValue={member.role}
-                            onChange={(e) => {
-                              const form = e.target.closest('form');
-                              if (form) form.requestSubmit();
-                            }}
-                            className="text-sm border rounded px-2 py-1 bg-white focus:outline-none focus:ring-2 focus:ring-purple-500"
-                          >
-                            <option value="ADMIN">Admin</option>
-                            <option value="MEMBER">Member</option>
-                          </select>
-                        </form>
+                        <RoleSelector 
+                          memberId={member.id}
+                          currentRole={member.role}
+                          workspaceId={workspaceId}
+                        />
                       )}
 
                       {canRemove && (
-                        <form action={async () => {
-                          "use server";
-                          await removeMember(member.id, workspaceId);
-                        }}>
-                          <Button type="submit" variant="ghost" size="sm" className="text-red-500 hover:text-red-600 hover:bg-red-50">
-                            <UserMinus className="w-4 h-4" />
-                          </Button>
-                        </form>
+                        <RemoveMemberButton
+                          memberId={member.id}
+                          workspaceId={workspaceId}
+                        />
                       )}
                     </div>
                   </div>
@@ -208,7 +191,7 @@ export default async function SettingsPage({
             </CardContent>
           </Card>
 
-          {/* Danger Zone (Only for OWNER) */}
+          {/* Danger Zone */}
           {permissions.canDeleteWorkspace && (
             <Card className="border-red-200">
               <CardHeader>
@@ -221,9 +204,6 @@ export default async function SettingsPage({
                     <p className="font-medium text-red-800">Delete Workspace</p>
                     <p className="text-sm text-red-600">All tasks, members, and data will be permanently deleted.</p>
                   </div>
-                  <Button variant="destructive" disabled>
-                    Delete (Coming Soon)
-                  </Button>
                 </div>
               </CardContent>
             </Card>

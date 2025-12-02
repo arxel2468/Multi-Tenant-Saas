@@ -10,8 +10,8 @@ export function AnalyticsChart({
   completed: number 
 }) {
   const data = [
-    { name: "Completed", value: completed, color: "#9333ea" }, // Purple-600
-    { name: "Pending", value: total - completed, color: "#e2e8f0" }, // Slate-200
+    { name: "Completed", value: completed, color: "#9333ea" },
+    { name: "Pending", value: total - completed, color: "#e2e8f0" },
   ];
 
   if (total === 0) {
@@ -22,9 +22,11 @@ export function AnalyticsChart({
     );
   }
 
+  const percentage = Math.round((completed / total) * 100);
+
   return (
-    <div className="h-48 w-full">
-      <ResponsiveContainer width="100%" height="100%">
+    <div className="relative" style={{ width: "100%", height: "200px", minHeight: "200px" }}>
+      <ResponsiveContainer width="100%" height="100%" minWidth={200} minHeight={200}>
         <PieChart>
           <Pie
             data={data}
@@ -43,11 +45,12 @@ export function AnalyticsChart({
           <Tooltip />
         </PieChart>
       </ResponsiveContainer>
-      <div className="text-center -mt-24 pointer-events-none">
-         <span className="text-3xl font-bold block">{Math.round((completed/total)*100)}%</span>
-         <span className="text-xs text-gray-500 uppercase tracking-wider">Done</span>
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+        <div className="text-center">
+          <span className="text-3xl font-bold block">{percentage}%</span>
+          <span className="text-xs text-gray-500 uppercase tracking-wider">Done</span>
+        </div>
       </div>
-      <div className="mt-12"></div> 
     </div>
   );
 }
