@@ -26,11 +26,13 @@ interface TaskCardProps {
   userRole: string;
 }
 
-export function TaskCard({ task, workspaceId, onClick }: TaskCardProps) {
+// FIX: Added currentUserId and userRole to destructuring
+export function TaskCard({ task, workspaceId, onClick, currentUserId, userRole }: TaskCardProps) {
   const overdue = isOverdue(task.dueDate) && task.status !== "DONE";
   const commentCount = task._count?.comments || task.comments?.length || 0;
   const permissions = getPermissions(userRole as Role);
-  const canDelete = permissions.canDeleteTask(task.createById || "", currentUserId);
+  // FIX: Changed createById to createdById (typo fix)
+  const canDelete = permissions.canDeleteTask(task.createdById || "", currentUserId);
 
   return (
     <Card 
@@ -88,17 +90,16 @@ export function TaskCard({ task, workspaceId, onClick }: TaskCardProps) {
         </div>
         {canDelete && (
           <button 
-          onClick={async (e) => {
-            e.stopPropagation();
-            await deleteTask(task.id, workspaceId);
-            toast.error("Task deleted");
-          }}
-          className="text-gray-400 hover:text-red-500 transition-colors p-1"
-        >
-          <Trash2 className="w-4 h-4" />
-        </button>
+            onClick={async (e) => {
+              e.stopPropagation();
+              await deleteTask(task.id, workspaceId);
+              toast.error("Task deleted");
+            }}
+            className="text-gray-400 hover:text-red-500 transition-colors p-1"
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
         )}
-        
       </div>
     </Card>
   );
