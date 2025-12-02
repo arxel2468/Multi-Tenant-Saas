@@ -1,11 +1,10 @@
 import { prisma } from "@/lib/prisma";
 import { auth } from "@clerk/nextjs/server";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { createInvite } from "@/actions/invite";
+import { InviteForm } from "@/components/invite-form";
 import { changeMemberRole, removeMember } from "@/actions/member";
 import { getPermissions, getRoleLabel, getRoleBadgeColor, Role } from "@/lib/permissions";
 import { Crown, Shield, User, UserMinus, Mail } from "lucide-react";
@@ -29,6 +28,7 @@ export default async function SettingsPage({
       },
       invitations: {
         where: { status: "PENDING" },
+        orderBy: { createdAt: "desc" },
       },
     },
   });
@@ -95,23 +95,7 @@ export default async function SettingsPage({
                 <CardDescription>Send an invitation link to add new team members</CardDescription>
               </CardHeader>
               <CardContent>
-                <form action={async (formData) => {
-                  "use server";
-                  await createInvite(formData);
-                }} className="flex gap-2">
-                  <input type="hidden" name="workspaceId" value={workspace.id} />
-                  <Input 
-                    name="email" 
-                    placeholder="colleague@example.com" 
-                    required 
-                    type="email"
-                    className="flex-1"
-                  />
-                  <Button type="submit">Generate Invite Link</Button>
-                </form>
-                <p className="text-xs text-slate-500 mt-2">
-                  New members will join with the "Member" role.
-                </p>
+                <InviteForm workspaceId={workspace.id} />
               </CardContent>
             </Card>
           )}
@@ -127,7 +111,7 @@ export default async function SettingsPage({
                   <div key={inv.id} className="flex justify-between items-center p-3 bg-slate-50 rounded-lg">
                     <div>
                       <p className="font-medium text-sm">{inv.email}</p>
-                      <p className="text-xs text-slate-400 font-mono">
+                      <p className="text-xs text-slate-400 font-mono truncate max-w-xs">
                         {process.env.NEXT_PUBLIC_APP_URL}/invite/{inv.token}
                       </p>
                     </div>

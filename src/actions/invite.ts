@@ -23,6 +23,33 @@ export async function createInvite(formData: FormData) {
     throw new Error("You do not have permission to invite members");
   }
 
+  // Check if user is already a member
+  const existingMember = await prisma.membership.findFirst({
+    where: {
+      workspaceId,
+      userEmail: email,
+    },
+  });
+
+  if (existingMember) {
+    throw new Error("This user is already a member of this workspace");
+  }
+
+  // Check if invite already exists
+  const existingInvite = await prisma.invitation.findFirst({
+    where: {
+      workspaceId,
+      email,
+      status: "PENDING",
+    },
+  });
+
+  if (existingInvite) {
+    // Return existing token instead of creating new one
+    revalidatePath(`/dashboard/${workspaceId}/settings`);
+    return existingInvite.token;
+  }
+
   const token = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
 
   await prisma.invitation.create({
@@ -33,7 +60,7 @@ export async function createInvite(formData: FormData) {
     },
   });
 
-  revalidatePath(`/dashboard/${workspaceId}`);
+  revalidatePath(`/dashboard/${workspaceId}/settings`);
   return token;
 }
 
@@ -63,6 +90,11 @@ export async function acceptInvite(token: string) {
   });
 
   if (existingMembership) {
+    // Already a member, just redirect
+    await prisma.invitation.update({
+      where: { id: invitation.id },
+      data: { status: "ACCEPTED" },
+    });
     redirect(`/dashboard/${invitation.workspaceId}`);
   }
 
@@ -71,7 +103,7 @@ export async function acceptInvite(token: string) {
       userId: user.id,
       userEmail: user.emailAddresses[0].emailAddress,
       workspaceId: invitation.workspaceId,
-      role: "MEMBER", // New members always start as MEMBER
+      role: "MEMBER",
     },
   });
 
