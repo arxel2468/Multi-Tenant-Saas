@@ -1,7 +1,7 @@
 "use client";
 
 import { formatDistanceToNow } from "date-fns";
-import { getActionLabel, getActionIcon, ActivityAction } from "@/lib/activity-logger";
+import { getActionLabel, getActionIcon, ActivityAction } from "@/lib/activity-utils";
 
 interface ActivityLog {
   id: string;

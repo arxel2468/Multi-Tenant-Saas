@@ -4,7 +4,7 @@ import { auth } from "@clerk/nextjs/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentMembership } from "@/lib/check-permission";
 import { getPermissions, Role } from "@/lib/permissions";
-import { getActionLabel, ActivityAction } from "@/lib/activity-logger";
+import { getActionLabel, ActivityAction } from "@/lib/activity-utils";
 
 export async function exportActivityLogs(workspaceId: string) {
   const { userId } = await auth();
@@ -13,7 +13,6 @@ export async function exportActivityLogs(workspaceId: string) {
   const membership = await getCurrentMembership(workspaceId);
   if (!membership) throw new Error("You are not a member of this workspace");
 
-  // Only OWNER and ADMIN can export
   const permissions = getPermissions(membership.role as Role);
   if (!permissions.canInviteMembers) {
     throw new Error("You do not have permission to export data");
@@ -24,7 +23,6 @@ export async function exportActivityLogs(workspaceId: string) {
     orderBy: { createdAt: "desc" },
   });
 
-  // Convert to CSV
   const headers = ["Date", "Time", "User", "Action", "Target", "Details"];
   const rows = logs.map((log) => {
     const date = new Date(log.createdAt);
