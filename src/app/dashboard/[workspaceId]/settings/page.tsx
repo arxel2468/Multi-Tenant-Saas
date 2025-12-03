@@ -49,8 +49,7 @@ export default async function SettingsPage({
   };
 
   return (
-    <div className="min-h-screen bg-slate-50/50">
-      <div className="p-8 max-w-4xl mx-auto">
+    <div className="p-8 max-w-7xl mx-auto">
         <div className="mb-8">
           <h1 className="text-3xl font-bold">Team Settings</h1>
           <p className="text-slate-500 mt-1">Manage your team members and permissions.</p>

@@ -56,8 +56,7 @@ export default async function WorkspaceDashboard({
   );
 
   return (
-    <div className="min-h-screen bg-slate-50/50">
-      <div className="p-8 max-w-7xl mx-auto">
+    <div className="p-8 max-w-7xl mx-auto">
         {/* Header */}
         <FadeIn>
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
