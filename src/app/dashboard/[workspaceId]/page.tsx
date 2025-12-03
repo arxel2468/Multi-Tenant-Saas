@@ -202,6 +202,5 @@ export default async function WorkspaceDashboard({
           </div>
         </div>
       </div>
-    </div>
   );
 }

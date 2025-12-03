@@ -166,7 +166,6 @@ export function BillingClient({ workspaceId, currentPlan, workspaceName }: Billi
             </Card>
           </div>
         </div>
-      </div>
     </>
   );
 }

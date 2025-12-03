@@ -209,6 +209,5 @@ export default async function SettingsPage({
           )}
         </div>
       </div>
-    </div>
   );
 }
