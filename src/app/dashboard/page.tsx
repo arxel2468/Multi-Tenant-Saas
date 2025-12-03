@@ -11,14 +11,6 @@ export default async function Dashboard() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Navbar */}
-      <nav className="bg-white border-b border-gray-200 px-8 py-4 flex justify-between items-center">
-        <h1 className="font-bold text-xl tracking-tight flex items-center gap-2">
-          <Briefcase className="text-purple-600" /> YourSaaS
-        </h1>
-        <UserButton />
-      </nav>
-
       <main className="max-w-5xl mx-auto py-12 px-6">
         <div className="flex justify-between items-center mb-8">
           <h2 className="text-2xl font-bold text-gray-900">Your Workspaces</h2>
