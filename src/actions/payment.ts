@@ -3,6 +3,7 @@
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import crypto from "crypto";
+import { logActivity } from "@/lib/activity-logger";
 
 export async function verifyPaymentAndUpgrade(
   workspaceId: string, 
@@ -10,9 +11,6 @@ export async function verifyPaymentAndUpgrade(
   razorpay_payment_id: string, 
   razorpay_signature: string
 ) {
-  
-  // 1. Verify the Signature (Security Check)
-  // This ensures the user didn't just fake the success ID.
   const body = razorpay_order_id + "|" + razorpay_payment_id;
   const expectedSignature = crypto
     .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET!)
@@ -25,16 +23,23 @@ export async function verifyPaymentAndUpgrade(
     throw new Error("Invalid Payment Signature");
   }
 
-  // 2. Update Database
   await prisma.workspace.update({
     where: { id: workspaceId },
     data: {
       plan: "PRO",
-      subscriptionId: razorpay_payment_id, // Save the transaction ID
+      subscriptionId: razorpay_payment_id,
     },
   });
 
-  // 3. Refresh Data
+  // Log activity
+  await logActivity({
+    workspaceId,
+    action: "UPGRADED_PLAN",
+    targetType: "WORKSPACE",
+    targetId: workspaceId,
+    metadata: { paymentId: razorpay_payment_id },
+  });
+
   revalidatePath(`/dashboard/${workspaceId}`);
   
   return { success: true };

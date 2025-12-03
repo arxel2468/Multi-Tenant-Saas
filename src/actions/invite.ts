@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { getCurrentMembership } from "@/lib/check-permission";
 import { getPermissions, Role } from "@/lib/permissions";
+import { logActivity } from "@/lib/activity-logger";
 
 export async function createInvite(formData: FormData) {
   const { userId } = await auth();
@@ -14,7 +15,6 @@ export async function createInvite(formData: FormData) {
   const email = formData.get("email") as string;
   const workspaceId = formData.get("workspaceId") as string;
 
-  // Permission check
   const membership = await getCurrentMembership(workspaceId);
   if (!membership) throw new Error("You are not a member of this workspace");
 
@@ -23,7 +23,6 @@ export async function createInvite(formData: FormData) {
     throw new Error("You do not have permission to invite members");
   }
 
-  // Check if user is already a member
   const existingMember = await prisma.membership.findFirst({
     where: {
       workspaceId,
@@ -35,7 +34,6 @@ export async function createInvite(formData: FormData) {
     throw new Error("This user is already a member of this workspace");
   }
 
-  // Check if invite already exists
   const existingInvite = await prisma.invitation.findFirst({
     where: {
       workspaceId,
@@ -45,7 +43,6 @@ export async function createInvite(formData: FormData) {
   });
 
   if (existingInvite) {
-    // Return existing token instead of creating new one
     revalidatePath(`/dashboard/${workspaceId}/settings`);
     return existingInvite.token;
   }
@@ -58,6 +55,14 @@ export async function createInvite(formData: FormData) {
       workspaceId,
       token,
     },
+  });
+
+  // Log activity
+  await logActivity({
+    workspaceId,
+    action: "INVITED_MEMBER",
+    targetType: "INVITATION",
+    targetName: email,
   });
 
   revalidatePath(`/dashboard/${workspaceId}/settings`);
@@ -79,7 +84,6 @@ export async function acceptInvite(token: string) {
     throw new Error("Invalid or expired invite");
   }
 
-  // Check if already a member
   const existingMembership = await prisma.membership.findUnique({
     where: {
       userId_workspaceId: {
@@ -90,7 +94,6 @@ export async function acceptInvite(token: string) {
   });
 
   if (existingMembership) {
-    // Already a member, just redirect
     await prisma.invitation.update({
       where: { id: invitation.id },
       data: { status: "ACCEPTED" },
@@ -110,6 +113,14 @@ export async function acceptInvite(token: string) {
   await prisma.invitation.update({
     where: { id: invitation.id },
     data: { status: "ACCEPTED" },
+  });
+
+  // Log activity
+  await logActivity({
+    workspaceId: invitation.workspaceId,
+    action: "ACCEPTED_INVITE",
+    targetType: "MEMBER",
+    targetName: user.emailAddresses[0].emailAddress,
   });
 
   redirect(`/dashboard/${invitation.workspaceId}`);

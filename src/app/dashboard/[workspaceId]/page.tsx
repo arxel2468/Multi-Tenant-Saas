@@ -1,11 +1,13 @@
 import { prisma } from "@/lib/prisma";
-import { notFound } from "next/navigation";
 import { auth } from "@clerk/nextjs/server";
+import { notFound } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Clock, PartyPopper } from "lucide-react";
 import { CreateTaskButton } from "@/components/create-task-button";
 import { TaskList } from "@/components/task-list";
 import { AnalyticsChart } from "@/components/analytics-chart";
+import { ActivityFeed } from "@/components/activity-feed";
+import { ExportButton } from "@/components/export-button";
 import { isOverdue } from "@/lib/date-utils";
 import { FadeIn } from "@/components/ui/motion-wrapper";
 import { getPermissions, Role } from "@/lib/permissions";
@@ -29,29 +31,29 @@ export default async function WorkspaceDashboard({
         orderBy: { createdAt: "desc" },
         include: { 
           assignee: true,
-          _count: {
-            select: { comments: true }
-          }
+          _count: { select: { comments: true } }
         }
-      }
+      },
+      activityLogs: {
+        orderBy: { createdAt: "desc" },
+        take: 10,
+      },
     }
   });
 
   if (!workspace) return notFound();
 
+  const currentMembership = workspace.members.find(m => m.userId === userId);
+  const userRole = (currentMembership?.role || "MEMBER") as Role;
+  const permissions = getPermissions(userRole);
+
   const isPro = workspace.plan === "PRO" || success === "true";
   
-  // Calculate stats
   const totalTasks = workspace.tasks.length;
   const completedTasks = workspace.tasks.filter(t => t.status === "DONE").length;
   const overdueTasks = workspace.tasks.filter(
     t => t.status !== "DONE" && isOverdue(t.dueDate)
   );
-
-  // After getting currentMembership, add:
-  const currentMembership = workspace.members.find(m => m.userId === userId);
-  const userRole = (currentMembership?.role || "MEMBER") as Role;
-  const permissions = getPermissions(userRole);
 
   return (
     <div className="min-h-screen bg-slate-50/50">
@@ -73,8 +75,11 @@ export default async function WorkspaceDashboard({
               </p>
             </div>
             
-            <div className="flex gap-3">
+            <div className="flex gap-3 flex-wrap">
               <CreateTaskButton workspaceId={workspace.id} members={workspace.members} />
+              {permissions.canInviteMembers && (
+                <ExportButton workspaceId={workspace.id} />
+              )}
               <a href={`/dashboard/${workspaceId}/settings`}>
                 <Button variant="outline">Settings</Button>
               </a>
@@ -82,7 +87,7 @@ export default async function WorkspaceDashboard({
                 <a href={`/dashboard/${workspaceId}/billing`}>
                   <Button variant="outline">Billing</Button>
                 </a>
-                )}
+              )}
             </div>
           </div>
         </FadeIn>
@@ -185,6 +190,14 @@ export default async function WorkspaceDashboard({
                     <span className="font-bold">{workspace.members.length}</span>
                   </div>
                 </div>
+              </div>
+            </FadeIn>
+
+            {/* Activity Feed */}
+            <FadeIn delay={0.35}>
+              <div className="bg-white rounded-xl border shadow-sm p-6">
+                <h3 className="font-bold text-lg mb-4">Recent Activity</h3>
+                <ActivityFeed logs={workspace.activityLogs} />
               </div>
             </FadeIn>
           </div>

@@ -3,6 +3,7 @@
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
+import { logActivity } from "@/lib/activity-logger";
 
 export async function createComment(formData: FormData) {
   const user = await currentUser();
@@ -16,13 +17,28 @@ export async function createComment(formData: FormData) {
     throw new Error("Comment cannot be empty");
   }
 
-  await prisma.comment.create({
+  const task = await prisma.task.findUnique({
+    where: { id: taskId },
+    select: { title: true },
+  });
+
+  const comment = await prisma.comment.create({
     data: {
       taskId,
       content: content.trim(),
       userId: user.id,
       userEmail: user.emailAddresses[0].emailAddress,
     },
+  });
+
+  // Log activity
+  await logActivity({
+    workspaceId,
+    action: "CREATED_COMMENT",
+    targetType: "COMMENT",
+    targetId: comment.id,
+    targetName: task?.title,
+    metadata: { preview: content.substring(0, 50) },
   });
 
   revalidatePath(`/dashboard/${workspaceId}`);
@@ -32,9 +48,9 @@ export async function deleteComment(commentId: string, workspaceId: string) {
   const { userId } = await auth();
   if (!userId) throw new Error("Unauthorized");
 
-  // Only allow deletion if user owns the comment
   const comment = await prisma.comment.findUnique({
     where: { id: commentId },
+    include: { task: { select: { title: true } } },
   });
 
   if (!comment) throw new Error("Comment not found");
@@ -42,6 +58,15 @@ export async function deleteComment(commentId: string, workspaceId: string) {
 
   await prisma.comment.delete({
     where: { id: commentId },
+  });
+
+  // Log activity
+  await logActivity({
+    workspaceId,
+    action: "DELETED_COMMENT",
+    targetType: "COMMENT",
+    targetId: commentId,
+    targetName: comment.task?.title,
   });
 
   revalidatePath(`/dashboard/${workspaceId}`);

@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { getCurrentMembership } from "@/lib/check-permission";
 import { getPermissions, Role } from "@/lib/permissions";
+import { logActivity } from "@/lib/activity-logger";
 
 export async function createTask(formData: FormData) {
   const user = await currentUser();
@@ -12,7 +13,6 @@ export async function createTask(formData: FormData) {
 
   const workspaceId = formData.get("workspaceId") as string;
   
-  // Check membership
   const membership = await getCurrentMembership(workspaceId);
   if (!membership) throw new Error("You are not a member of this workspace");
 
@@ -25,7 +25,7 @@ export async function createTask(formData: FormData) {
   const dueDateString = formData.get("dueDate") as string;
   const dueDate = dueDateString ? new Date(dueDateString) : null;
 
-  await prisma.task.create({
+  const task = await prisma.task.create({
     data: {
       workspaceId,
       title,
@@ -36,6 +36,16 @@ export async function createTask(formData: FormData) {
       createdById: user.id,
       createdByEmail: user.emailAddresses[0].emailAddress,
     },
+  });
+
+  // Log activity
+  await logActivity({
+    workspaceId,
+    action: "CREATED_TASK",
+    targetType: "TASK",
+    targetId: task.id,
+    targetName: title,
+    metadata: { priority, dueDate },
   });
 
   revalidatePath(`/dashboard/${workspaceId}`);
@@ -55,7 +65,7 @@ export async function deleteTask(taskId: string, workspaceId: string) {
   if (!task) throw new Error("Task not found");
 
   const permissions = getPermissions(membership.role as Role);
-  const canDelete = permissions.canDeleteTask(task.createdById, userId);
+  const canDelete = permissions.canDeleteTask(task.createdById || "", userId);
 
   if (!canDelete) {
     throw new Error("You do not have permission to delete this task");
@@ -63,6 +73,15 @@ export async function deleteTask(taskId: string, workspaceId: string) {
 
   await prisma.task.delete({
     where: { id: taskId },
+  });
+
+  // Log activity
+  await logActivity({
+    workspaceId,
+    action: "DELETED_TASK",
+    targetType: "TASK",
+    targetId: taskId,
+    targetName: task.title,
   });
 
   revalidatePath(`/dashboard/${workspaceId}`);
@@ -82,7 +101,7 @@ export async function toggleTaskStatus(taskId: string, currentStatus: string, wo
   if (!task) throw new Error("Task not found");
 
   const permissions = getPermissions(membership.role as Role);
-  const canEdit = permissions.canEditTask(task.createdById, userId);
+  const canEdit = permissions.canEditTask(task.createdById || "", userId);
 
   if (!canEdit) {
     throw new Error("You do not have permission to edit this task");
@@ -93,6 +112,15 @@ export async function toggleTaskStatus(taskId: string, currentStatus: string, wo
   await prisma.task.update({
     where: { id: taskId },
     data: { status: newStatus },
+  });
+
+  // Log activity
+  await logActivity({
+    workspaceId,
+    action: newStatus === "DONE" ? "COMPLETED_TASK" : "REOPENED_TASK",
+    targetType: "TASK",
+    targetId: taskId,
+    targetName: task.title,
   });
 
   revalidatePath(`/dashboard/${workspaceId}`);
@@ -112,7 +140,7 @@ export async function updateTaskStatusAndOrder(taskId: string, newStatus: string
   if (!task) throw new Error("Task not found");
 
   const permissions = getPermissions(membership.role as Role);
-  const canEdit = permissions.canEditTask(task.createdById, userId);
+  const canEdit = permissions.canEditTask(task.createdById || "", userId);
 
   if (!canEdit) {
     throw new Error("You do not have permission to edit this task");
@@ -121,6 +149,16 @@ export async function updateTaskStatusAndOrder(taskId: string, newStatus: string
   await prisma.task.update({
     where: { id: taskId },
     data: { status: newStatus },
+  });
+
+  // Log activity
+  await logActivity({
+    workspaceId,
+    action: newStatus === "DONE" ? "COMPLETED_TASK" : "UPDATED_TASK",
+    targetType: "TASK",
+    targetId: taskId,
+    targetName: task.title,
+    metadata: { newStatus },
   });
 
   revalidatePath(`/dashboard/${workspaceId}`);

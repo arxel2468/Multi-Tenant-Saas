@@ -16,6 +16,7 @@ model Workspace {
   members        Membership[] 
   invitations    Invitation[] 
   tasks          Task[]
+  activityLogs   ActivityLog[]
 
   // Subscription Details
   subscriptionId String?   
@@ -80,4 +81,21 @@ model Comment {
   updatedAt DateTime @updatedAt
 
   task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+}
+
+model ActivityLog {
+  id          String   @id @default(cuid())
+  workspaceId String
+  userId      String
+  userEmail   String
+  action      String   // CREATED_TASK, COMPLETED_TASK, DELETED_TASK, INVITED_MEMBER, etc.
+  targetType  String   // TASK, MEMBER, WORKSPACE, COMMENT
+  targetId    String?  // The ID of the affected item
+  targetName  String?  // Human-readable name (e.g., task title)
+  metadata    String?  // JSON string for extra data
+  createdAt   DateTime @default(now())
+
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId, createdAt])
 }
